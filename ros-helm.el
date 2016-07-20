@@ -10,36 +10,32 @@
 (defvar launchfile-candidate-list-cache nil)
 
 (defun fetch-launchfile-candidate-list ()
-  "Fills the `launchfile-candidate-list-cache' variable with the name of the launchfiles we could find"
-  (with-temp-buffer
+  "Fills the `launchfile-candidate-list-cache' variable with the name of the launchfiles we could find, an then returns it."
+  (with-current-buffer "    *temp*"
     (call-process-shell-command
-     "find /opt/ros/indigo -type f -name \"*.launch\"" nil t)
+     "find /opt/ros/indigo -type f -name \"*.launch\"" nil (get-buffer "    *temp*"))
     (goto-char (point-min))
     (let (launchfiles)
       (while (not (eq 0 (count-lines (point) (point-max))))
-        (push (buffer-substring (point) (line-end-position)) launchfiles)
-        (forward-line))
+        (push (buffer-substring (line-beginning-position) (point)) launchfiles)
+        (message (buffer-substring (line-beginning-position) (point)))
+        (end-of-line))
       (setq launchfile-candidate-list-cache launchfiles)
-      (kill-buffer))))
+      (kill-buffer)))
+  launchfile-candidate-list-cache)
 
 (defun launchfile-candidate-list ()
   (if launchfile-candidate-list-cache
-      launchfile-candidate-list-cache
-    (setq launchfile-candidate-list-cache
-          (accept-process-output
-           (call-process-shell-command
-            "find-launchfiles" nil
-            "find" "/opt/ros/indigo/" "|" "grep" "\\.launch$")))))
+      (fetch-launchfile-candidate-list)
+    launchfile-candidate-list-cache))
 
 (defvar helm-source-ros-launchfiles
-  (helm-build-async-source "Launchfiles"
-    :candidates-process (lambda ()
-                          )
-    :action ("Open file" . (lambda (launchfile-str)
+  (helm-build-sync-source "Launchfiles"
+    :candidates (map 'list (lambda (path) (make-symbol path)) (launchfile-candidate-list))
+    :action '(("Open file" . (lambda (launchfile-str)
                              (interactive)
-                             (find-file launchfile-str)))))
+                             (find-file launchfile-str))))))
 
-;;;###autoload
 (defun ros-helm ()
   (interactive)
   (helm :sources '(helm-source-ros-services helm-source-ros-launchfiles)
