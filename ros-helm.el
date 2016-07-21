@@ -1,6 +1,10 @@
 
+(require 'cl)
+
 (defvar ros-helm--package-path
-  (replace-regexp-in-string ":" " " (getenv "ROS_PACKAGE_PATH")))
+  (mapconcat 'identity (remove-if-not 'file-exists-p
+                                      (split-string
+                                       (getenv "ROS_PACKAGE_PATH") ":")) " "))
 
 (defvar ros-helm--launchfile-candidate-list-cache nil)
 (defvar ros-helm--service-candidate-list-cache nil)
