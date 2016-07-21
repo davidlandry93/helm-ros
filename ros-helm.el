@@ -25,12 +25,12 @@
       ros-helm--launchfile-candidate-list-cache
     (set 'ros-helm--launchfile-candidate-list-cache
           (ros-helm/list-files-of-command
-           (format "find %s -type f -name \"*.launch\"" ros-helm--package-path)))))
+           (format "find -L %s -type f -name \"*.launch\"" ros-helm--package-path)))))
 
 
 (defvar helm-source-ros-launchfiles
   (helm-build-sync-source "Launchfiles"
-    :candidates (launchfile-candidate-list)
+    :candidates (ros-helm/launchfile-candidate-list)
     :action '(("Open file" . (lambda (launchfile-str)
                              (interactive)
                              (find-file launchfile-str))))))
@@ -40,7 +40,7 @@
       ros-helm--service-candidate-list-cache
     (set 'ros-helm--service-candidate-list-cache
          (ros-helm/list-files-of-command
-          (format "find %s -type f -name \"*.srv\"" ros-helm--package-path)))))
+          (format "find -L %s -type f -name \"*.srv\"" ros-helm--package-path)))))
 
 (defvar helm-source-ros-services
   (helm-build-sync-source "Services"
@@ -48,7 +48,7 @@
     :action '(("Open file" . (lambda (srvfile-str)
                                (interactive)
                                (find-file srvfile-str))))))
-    
+
 (defun ros-helm ()
   (interactive)
   (helm :sources '(helm-source-ros-services helm-source-ros-launchfiles)
