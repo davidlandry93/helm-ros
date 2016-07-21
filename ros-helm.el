@@ -12,6 +12,11 @@
 (defun ros-helm/open-file-action (filename)
   (interactive) (find-file filename))
 
+(defun ros-helm/launch-launchfile (filename)
+  (start-process-shell-command "roslaunch"
+                               (get-buffer-create "*roslaunch*")
+                               (format "roslaunch %s" filename)))
+
 (defun ros-helm/displayed-real-pair-of-path (fullpath)
   `(,(file-name-nondirectory (file-name-sans-extension fullpath)) . ,fullpath))
 
@@ -41,9 +46,8 @@ a list of (displayed . real) candidate name."
 (defvar helm-source-ros-launchfiles
   (helm-build-sync-source "Launchfiles"
     :candidates (ros-helm/launchfile-candidate-list)
-    :action '(("Open file" . (lambda (launchfile-str)
-                             (interactive)
-                             (find-file launchfile-str))))))
+    :action '(("Open File" . ros-helm/open-file-action)
+              ("Launch" . ros-helm/launch-launchfile))))
 
 (defun ros-helm/service-candidate-list ()
   (if ros-helm--service-candidate-list-cache
