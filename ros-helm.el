@@ -73,22 +73,52 @@
   (ros-helm/list-of-command-output "rospack list"))
 
 (defun ros-helm/parsed-rospack-entry (entry)
-  (let (splitted-string (split-string entry))
-    splitted-string))
+  (let ((splitted-string (split-string entry)) )
+    (cons (car splitted-string) (car (cdr splitted-string)))))
 
 (defun ros-helm/package-candidate-list ()
+  "Outputs a list of dotted pairs having the name of the package as
+the car and the path to the package root as the cdr."
   (if ros-helm--package-candidate-list-cache
       ros-helm--package-candidate-list-cache
     (set 'ros-helm--package-candidate-list-cache
-         (mapcar (lambda (x)
-                   (let ((splitted-string (split-string x)))
-                     (cons (car splitted-string) (car (cdr splitted-string)))))
+         (mapcar parsed-rospack-entry
                  (ros-helm/list-of-command-output "rospack list")))))
 
 (defvar helm-source-ros-packages
   (helm-build-sync-source "Packages"
     :candidates (ros-helm/package-candidate-list)
     :action '(("Open folder" . (lambda (candidate) (interactive) (dired candidate))))))
+
+
+;; Nodes
+
+
+(defvar ros-helm--nodes-candidate-list-cache nil)
+
+(defun ros-helm/list-of-package-names ()
+  (mapcar (lambda (x)
+            (let ((parsed-entry (ros-helm/parsed-rospack-entry x)))
+              (car parsed-entry)))
+          (ros-helm/fetch-list-of-packages)))
+
+(defun ros-helm/exec-folders-of-package (package)
+  (ros-helm/list-of-command-output (format "catkin_find --libexec %s" package)))
+
+(defun ros-helm/nodes-of-package (package)
+  (let ((list-of-exec-folders (ros-helm/exec-folders-of-package package)))
+    (if list-of-exec-folders
+        (mapcar 'file-name-nondirectory
+                (ros-helm/list-of-command-output
+                 (format "find -L %s -type f -executable"
+                         (mapconcat 'identity list-of-exec-folders " ")))))))
+
+(defun ros-helm/list-of-package-node-pairs ()
+  (let (list-of-pairs)
+    (dolist (package (ros-helm/list-of-package-names))
+      (dolist (node (ros-helm/nodes-of-package package))
+        (push (cons package node) list-of-pairs)))
+    list-of-pairs))
 
 (defun ros-helm ()
   "Launches ros-helm with all available sources."
