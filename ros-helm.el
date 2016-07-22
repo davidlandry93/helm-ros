@@ -120,12 +120,31 @@ the car and the path to the package root as the cdr."
         (push (cons package node) list-of-pairs)))
     list-of-pairs))
 
+(defun ros-helm/pretty-string-of-package-node-pair (pair)
+  (format "%s/%s" (car pair) (cdr pair)))
+
+(defun ros-helm/real-string-of-package-node-pair (pair)
+  (format "%s %s" (car pair) (cdr pair)))
+
+(defun ros-helm/node-candidate-list ()
+  (if ros-helm--nodes-candidate-list-cache
+      ros-helm--nodes-candidate-list-cache
+    (set 'ros-helm--nodes-candidate-list-cache
+         (mapcar (lambda (pair) (cons (ros-helm/pretty-package-node-pair pair)
+                                      (ros-helm/real-string-of-package-node-pair pair)))
+                 (ros-helm/list-of-package-node-pairs)))))
+
+(defvar helm-source-ros-nodes
+  (helm-build-sync-source "Nodes"
+      :candidates (ros-helm/node-candidate-list) ))
+
 (defun ros-helm ()
   "Launches ros-helm with all available sources."
   (interactive)
   (helm :sources '(helm-source-ros-services
                    helm-source-ros-launchfiles
-                   helm-source-ros-packages)
+                   helm-source-ros-packages
+                   helm-source-ros-nodes)
         :buffer "*ros-helm*"))
 
 (provide 'ros-helm)
