@@ -148,8 +148,9 @@ the car and the path to the package root as the cdr."
                    helm-source-ros-nodes)
         :buffer "*ros-helm*"))
 
-
 (defun ros-helm/invalidate-cache ()
+  "Invalidates the cache of all ros-helm sources."
+  (interactive)
   (setq ros-helm--package-candidate-list-cache nil
         ros-helm--launchfile-candidate-list-cache nil
         ros-helm--nodes-candidate-list-cache nil
