@@ -135,9 +135,17 @@ the car and the path to the package root as the cdr."
                                       (ros-helm/real-string-of-package-node-pair pair)))
                  (ros-helm/list-of-package-node-pairs)))))
 
+(defun ros-helm/launch-node (node)
+  (let ((node-buffer (get-buffer-create (format "*%s*" node))))
+    (start-process-shell-command "rosrun"
+                                 node-buffer
+                                 (format "rosrun %s" node))
+    (pop-to-buffer node-buffer)))
+
 (defvar helm-source-ros-nodes
   (helm-build-sync-source "Nodes"
-      :candidates (ros-helm/node-candidate-list)))
+    :candidates (ros-helm/node-candidate-list)
+    :action '(("Run node" . (lambda (node) (ros-helm/launch-node node))))))
 
 (defun ros-helm ()
   "Launches ros-helm with all available sources."
