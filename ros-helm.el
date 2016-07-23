@@ -24,6 +24,7 @@
     (split-string (buffer-string) "\n" t)))
 
 
+
 ;; Launchfiles
 
 
@@ -82,7 +83,7 @@ the car and the path to the package root as the cdr."
   (if ros-helm--package-candidate-list-cache
       ros-helm--package-candidate-list-cache
     (set 'ros-helm--package-candidate-list-cache
-         (mapcar parsed-rospack-entry
+         (mapcar 'ros-helm/parsed-rospack-entry
                  (ros-helm/list-of-command-output "rospack list")))))
 
 (defvar helm-source-ros-packages
@@ -130,13 +131,13 @@ the car and the path to the package root as the cdr."
   (if ros-helm--nodes-candidate-list-cache
       ros-helm--nodes-candidate-list-cache
     (set 'ros-helm--nodes-candidate-list-cache
-         (mapcar (lambda (pair) (cons (ros-helm/pretty-package-node-pair pair)
+         (mapcar (lambda (pair) (cons (ros-helm/pretty-string-of-package-node-pair pair)
                                       (ros-helm/real-string-of-package-node-pair pair)))
                  (ros-helm/list-of-package-node-pairs)))))
 
 (defvar helm-source-ros-nodes
   (helm-build-sync-source "Nodes"
-      :candidates (ros-helm/node-candidate-list) ))
+      :candidates (ros-helm/node-candidate-list)))
 
 (defun ros-helm ()
   "Launches ros-helm with all available sources."
@@ -146,5 +147,12 @@ the car and the path to the package root as the cdr."
                    helm-source-ros-packages
                    helm-source-ros-nodes)
         :buffer "*ros-helm*"))
+
+
+(defun ros-helm/invalidate-cache ()
+  (setq ros-helm--package-candidate-list-cache nil
+        ros-helm--launchfile-candidate-list-cache nil
+        ros-helm--nodes-candidate-list-cache nil
+        ros-helm--service-candidate-list-cache nil))
 
 (provide 'ros-helm)
