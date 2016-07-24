@@ -65,6 +65,24 @@
     :action '(("Open file" . ros-helm/open-file-action))))
 
 
+;; Actions
+
+(defvar ros-helm--action-candidate-list-cache nil)
+
+(defun ros-helm/action-candidate-list ()
+  (if ros-helm--action-candidate-list-cache
+      ros-helm--action-candidate-list-cache
+    (set 'ros-helm--action-candidate-list-cache
+         (mapcar 'ros-helm/displayed-real-pair-of-path
+                 (ros-helm/list-of-command-output
+                  (format "find -L %s -type f -name \"*.action\"" ros-helm--package-path))))))
+
+(defvar helm-source-ros-actions
+  (helm-build-sync-source "Actions"
+    :candidates (ros-helm/action-candidate-list)
+    :action '(("Open file" . ros-helm/open-file-action))))
+
+
 ;; Packages
 
 
@@ -153,7 +171,8 @@ the car and the path to the package root as the cdr."
   (helm :sources '(helm-source-ros-services
                    helm-source-ros-launchfiles
                    helm-source-ros-packages
-                   helm-source-ros-nodes)
+                   helm-source-ros-nodes
+                   helm-source-ros-actions)
         :buffer "*ros-helm*"))
 
 (defun ros-helm/invalidate-cache ()
@@ -162,6 +181,7 @@ the car and the path to the package root as the cdr."
   (setq ros-helm--package-candidate-list-cache nil
         ros-helm--launchfile-candidate-list-cache nil
         ros-helm--nodes-candidate-list-cache nil
-        ros-helm--service-candidate-list-cache nil))
+        ros-helm--service-candidate-list-cache nil
+        ros-helm--action-candidate-list-cache))
 
 (provide 'ros-helm)
