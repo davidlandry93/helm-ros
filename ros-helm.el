@@ -24,6 +24,7 @@
     (split-string (buffer-string) "\n" t)))
 
 (defun ros-helm/roscore ()
+  (interactive)
   (with-current-buffer (get-buffer-create "*roscore*")
     (start-process "roscore" (current-buffer) "roscore")
     (pop-to-buffer (current-buffer))
