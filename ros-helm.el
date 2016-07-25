@@ -1,6 +1,5 @@
 
 (require 'cl)
-(require 'ros-node-mode)
 
 (defvar ros-helm--package-path
   (mapconcat 'identity (remove-if-not 'file-exists-p
@@ -115,6 +114,7 @@ the car and the path to the package root as the cdr."
 
 
 (defvar ros-helm--nodes-candidate-list-cache nil)
+(autoload 'ros-node-mode "ros-node-mode")
 
 (defun ros-helm/list-of-package-names ()
   (mapcar (lambda (x)
