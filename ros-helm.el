@@ -12,7 +12,7 @@
 
 (defun ros-helm/launch-launchfile (filename)
   (start-process-shell-command "roslaunch"
-                               (get-buffer-create "*roslaunch*")
+                               (get-buffer-create (format "*roslaunch %s*" filename))
                                (format "roslaunch %s" filename)))
 
 (defun ros-helm/displayed-real-pair-of-path (fullpath)
@@ -23,6 +23,11 @@
     (call-process-shell-command command nil t)
     (split-string (buffer-string) "\n" t)))
 
+(defun ros-helm/roscore ()
+  (with-current-buffer (get-buffer-create "*roscore*")
+    (start-process "roscore" (current-buffer) "roscore")
+    (pop-to-buffer (current-buffer))
+    (ros-process-mode)))
 
 
 ;; Launchfiles
@@ -114,7 +119,7 @@ the car and the path to the package root as the cdr."
 
 
 (defvar ros-helm--nodes-candidate-list-cache nil)
-(autoload 'ros-node-mode "ros-node-mode")
+(autoload 'ros-process-mode "ros-process-mode")
 
 (defun ros-helm/list-of-package-names ()
   (mapcar (lambda (x)
@@ -161,7 +166,7 @@ the car and the path to the package root as the cdr."
                                  (format "rosrun %s" node))
     (pop-to-buffer node-buffer)
     (interactive)
-    (ros-node-mode)))
+    (ros-process-mode)))
 
 (defvar helm-source-ros-nodes
   (helm-build-sync-source "Nodes"

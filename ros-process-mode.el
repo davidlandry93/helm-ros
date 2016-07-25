@@ -1,7 +1,7 @@
 
-(defvar ros-node-mode-hook nil)
+(defvar ros-process-mode-hook nil)
 
-(defvar ros-node-mode-map
+(defvar ros-process-mode-map
   (let ((map (make-keymap)))
     (define-key map (kbd "k") 'ros-helm/kill-ros-node)
     (define-key map (kbd "c") 'ros-helm/interrupt-ros-node)
@@ -19,8 +19,8 @@
   (let ((ros-node-process (get-buffer-process (current-buffer))))
     (kill-process ros-node-process)))
 
-(define-derived-mode ros-node-mode fundamental-mode "ROS Node Mode"
+(define-derived-mode ros-process-mode fundamental-mode "ROS Node Mode"
   "Major mode for handling a rosrun console."
   ())
 
-(provide 'ros-node-mode)
+(provide 'ros-process-mode)
