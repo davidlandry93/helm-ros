@@ -1,5 +1,6 @@
 
 (require 'cl)
+(require 'ros-node-mode)
 
 (defvar ros-helm--package-path
   (mapconcat 'identity (remove-if-not 'file-exists-p
@@ -158,7 +159,9 @@ the car and the path to the package root as the cdr."
     (start-process-shell-command "rosrun"
                                  node-buffer
                                  (format "rosrun %s" node))
-    (pop-to-buffer node-buffer)))
+    (pop-to-buffer node-buffer)
+    (interactive)
+    (ros-node-mode)))
 
 (defvar helm-source-ros-nodes
   (helm-build-sync-source "Nodes"
@@ -182,6 +185,6 @@ the car and the path to the package root as the cdr."
         ros-helm--launchfile-candidate-list-cache nil
         ros-helm--nodes-candidate-list-cache nil
         ros-helm--service-candidate-list-cache nil
-        ros-helm--action-candidate-list-cache))
+        ros-helm--action-candidate-list-cache nil))
 
 (provide 'ros-helm)
