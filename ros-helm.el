@@ -1,6 +1,8 @@
 
 (require 'cl)
 
+(autoload 'ros-process-mode "ros-process-mode")
+
 (defvar ros-helm--package-path
   (mapconcat 'identity (remove-if-not 'file-exists-p
                                       (split-string
@@ -11,9 +13,11 @@
   (interactive) (find-file filename))
 
 (defun ros-helm/launch-launchfile (filename)
-  (start-process-shell-command "roslaunch"
-                               (get-buffer-create (format "*roslaunch %s*" filename))
-                               (format "roslaunch %s" filename)))
+  (let ((launchfile-name (file-name-sans-extension filename)))
+   (with-current-buffer (get-buffer-create (format "*roslaunch %s*" launchfile-name))
+    (start-process launchfile-name (current-buffer) "roslaunch" filename))
+    (pop-to-buffer (current-buffer))
+    (ros-process-mode)))
 
 (defun ros-helm/displayed-real-pair-of-path (fullpath)
   (cons (file-name-nondirectory (file-name-sans-extension fullpath)) fullpath))
@@ -35,6 +39,8 @@
 
 
 (defvar ros-helm--launchfile-candidate-list-cache nil)
+(defvar ros-helm--launchfile-actions '(("Open File" . ros-helm/open-file-action)
+                                       ("Launch" . ros-helm/launch-launchfile)))
 
 (defun ros-helm/launchfile-candidate-list ()
   (if ros-helm--launchfile-candidate-list-cache
@@ -48,8 +54,16 @@
 (defvar helm-source-ros-launchfiles
   (helm-build-sync-source "Launchfiles"
     :candidates (ros-helm/launchfile-candidate-list)
-    :action '(("Open File" . ros-helm/open-file-action)
-              ("Launch" . ros-helm/launch-launchfile))))
+    :action ros-helm--launchfile-actions))
+
+(defun ros-helm/roslaunch ()
+  (interactive)
+  (push '("Launch" . ros-helm/launch-launchfile) ros-helm--launchfile-actions)
+  (remove-duplicates ros-helm--launchfile-actions)
+  (helm :sources helm-source-ros-launchfiles
+        :buffer "*helm-roslaunch*")
+  (push '("Open File" . ros-helm/open-file-action) ros-helm--launchfile-actions)
+  (remove-duplicates ros-helm--launchfile-actions))
 
 
 ;; Services
@@ -84,7 +98,7 @@
                   (format "find -L %s -type f -name \"*.action\"" ros-helm--package-path))))))
 
 (defvar helm-source-ros-actions
-  (helm-build-sync-source "Actions"
+  (helm-build-sync-source "trrrActions"
     :candidates (ros-helm/action-candidate-list)
     :action '(("Open file" . ros-helm/open-file-action))))
 
@@ -120,7 +134,6 @@ the car and the path to the package root as the cdr."
 
 
 (defvar ros-helm--nodes-candidate-list-cache nil)
-(autoload 'ros-process-mode "ros-process-mode")
 
 (defun ros-helm/list-of-package-names ()
   (mapcar (lambda (x)

@@ -26,7 +26,6 @@ to the process buffer."
     (with-current-buffer (process-buffer process)
       (let ((moving (= (point) (process-mark process))))
         (save-excursion
-          (message "FILTER")
           (goto-char (process-mark process))
           (insert (xterm-color-filter string))
           (set-marker (process-mark process) (point)))
