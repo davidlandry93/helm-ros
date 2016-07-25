@@ -13,11 +13,13 @@
   (interactive) (find-file filename))
 
 (defun ros-helm/launch-launchfile (filename)
-  (let ((launchfile-name (file-name-sans-extension filename)))
-   (with-current-buffer (get-buffer-create (format "*roslaunch %s*" launchfile-name))
-    (start-process launchfile-name (current-buffer) "roslaunch" filename))
-    (pop-to-buffer (current-buffer))
-    (ros-process-mode)))
+  (let* ((launchfile-name (file-name-nondirectory
+                           (file-name-sans-extension filename)))
+         (buffer (get-buffer-create (format "*roslaunch %s*" launchfile-name))))
+    (with-current-buffer buffer
+      (start-process launchfile-name buffer "roslaunch" filename)
+      (ros-process-mode)
+      (pop-to-buffer buffer))))
 
 (defun ros-helm/displayed-real-pair-of-path (fullpath)
   (cons (file-name-nondirectory (file-name-sans-extension fullpath)) fullpath))
