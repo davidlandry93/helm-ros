@@ -6,9 +6,13 @@ With it you can access launchfiles, nodes, service definitions, and many other t
 easily. Above all that ros-helm allows you to start ROS processes and give you some
 other goodies to facilitate your ROS development in C++.
 
-## What is the difference between ros-helm and rosemacs?
+### Screencap
 
-`ros-helm` is pure Emacs LISP code, so we can ship it through melpa. `rosemacs` can't be
+![Animated gif of ros-helm](/doc/screencap.gif)
+
+### What is the difference between ros-helm and rosemacs?
+
+
 delivered that way because it contains common LISP code used to interface emacs with
 the ROS through LISP.
 
