@@ -95,6 +95,7 @@
 
 (defun ros-helm//roslaunch ()
   "Put the launch launchfile action first, an then start helm with the launchfile source."
+launchfile source"
   (interactive)
   (push '("Launch" . ros-helm//launch-launchfile) ros-helm--launchfile-actions)
   (cl-remove-duplicates ros-helm--launchfile-actions)
@@ -246,6 +247,13 @@ the car and the path to the package root as the cdr."
         ros-helm--nodes-candidate-list-cache nil
         ros-helm--service-candidate-list-cache nil
         ros-helm--action-candidate-list-cache nil))
+
+(global-unset-key (kbd "C-x C-r"))
+(global-set-key (kbd "C-x C-r i") 'ros-helm/invalidate-cache)
+(global-set-key (kbd "C-x C-r h") 'ros-helm)
+(global-set-key (kbd "C-x C-r m") 'ros-helm/roscore)
+
+(add-to-list 'auto-mode-alist '("\\.launch\\'" . nxlm-mode))
 
 (global-unset-key (kbd "C-x C-r"))
 (global-set-key (kbd "C-x C-r i") 'ros-helm/invalidate-cache)
