@@ -1,5 +1,5 @@
 
-(setq package-list '(helm))
+(setq package-list '(helm xterm-color))
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
@@ -15,4 +15,5 @@
 
 (require 'helm)
 
-(load-file "ros-helm.el")
+(require 'ros-helm nil 'noerror)
+
