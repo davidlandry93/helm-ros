@@ -208,4 +208,8 @@ the car and the path to the package root as the cdr."
         ros-helm--service-candidate-list-cache nil
         ros-helm--action-candidate-list-cache nil))
 
+(global-unset-key (kbd "C-x C-r"))
+(global-set-key (kbd "C-x C-r i") 'ros-helm/invalidate-cache)
+(global-set-key (kbd "C-x C-r h") 'ros-helm)
+
 (provide 'ros-helm)
