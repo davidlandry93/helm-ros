@@ -295,13 +295,6 @@ the car and the path to the package root as the cdr."
 (global-set-key (kbd "C-x C-r h") 'ros-helm)
 (global-set-key (kbd "C-x C-r m") 'ros-helm/roscore)
 
-(add-to-list 'auto-mode-alist '("\\.launch\\'" . nxlm-mode))
-
-(global-unset-key (kbd "C-x C-r"))
-(global-set-key (kbd "C-x C-r i") 'ros-helm/invalidate-cache)
-(global-set-key (kbd "C-x C-r h") 'ros-helm)
-(global-set-key (kbd "C-x C-r m") 'ros-helm/roscore)
-
 (add-to-list 'auto-mode-alist '("\\.launch\\'" . nxml-mode))
 
 (provide 'ros-helm)
