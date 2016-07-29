@@ -119,7 +119,7 @@
 
 
 (defvar ros-helm--launchfile-candidate-list-cache nil)
-(defvar ros-helm--launchfile-actions '(("Open File" . ros-helm//open-file-action)
+(defvar ros-helm--launchfile-actions '(("Edit" . ros-helm//open-file-action)
                                        ("Launch" . ros-helm//launch-launchfile)))
 
 (defun ros-helm//launchfile-candidate-list ()
@@ -136,16 +136,11 @@
     :candidates 'ros-helm//launchfile-candidate-list
     :action ros-helm--launchfile-actions))
 
-(defun ros-helm//roslaunch ()
-  "Put the launch launchfile action first, an then start helm with the launchfile source."
+;;;###autoload
+(defun ros-helm/launchfiles ()
+  "Launch helm with ros launchfiles as the only source."
   (interactive)
-  (push '("Launch" . ros-helm//launch-launchfile) ros-helm--launchfile-actions)
-  (cl-remove-duplicates ros-helm--launchfile-actions)
-  (helm :sources helm-source-ros-launchfiles
-        :buffer "*helm-roslaunch*")
-  (push '("Open File" . ros-helm//open-file-action) ros-helm--launchfile-actions)
-  (cl-remove-duplicates ros-helm--launchfile-actions))
-
+  (helm :sources '(helm-source-ros-launchfiles)))
 
 ;; Services
 
@@ -255,8 +250,8 @@ the car and the path to the package root as the cdr."
                                       (ros-helm//real-string-of-package-node-pair pair)))
                  (ros-helm//list-of-package-node-pairs)))))
 
-(defun ros-helm//launch-node (node)
-  (interactive)
+(defun ros-helm/launch-node (node)
+  (interactive "")
   (let ((node-buffer (get-buffer-create (format "*%s*" node))))
     (start-process-shell-command "rosrun"
                                  node-buffer
@@ -307,6 +302,7 @@ the car and the path to the package root as the cdr."
 
 ;;;###autoload
 (defun ros-helm/topics ()
+  "Launches ros-helm with only the topic source."
   (interactive)
   (helm :sources '(helm-source-ros-topics)))
 
@@ -314,7 +310,7 @@ the car and the path to the package root as the cdr."
 
 ;;;###autoload
 (defun ros-helm ()
-  "Launches ros-helm with all available sources."
+  "Launch ros-helm with all available sources."
   (interactive)
   (helm :sources '(helm-source-ros-services
                    helm-source-ros-launchfiles
@@ -338,6 +334,8 @@ the car and the path to the package root as the cdr."
 (global-set-key (kbd "C-x C-r i") 'ros-helm/invalidate-cache)
 (global-set-key (kbd "C-x C-r h") 'ros-helm)
 (global-set-key (kbd "C-x C-r m") 'ros-helm/roscore)
+(global-set-key (kbd "C-x C-r t") 'ros-helm/topics)
+(global-set-key (kbd "C-x C-r l") 'ros-helm/launchfiles)
 
 (add-to-list 'auto-mode-alist '("\\.launch\\'" . nxml-mode))
 
