@@ -270,26 +270,46 @@ the car and the path to the package root as the cdr."
     :action '(("Run node" . (lambda (node) (ros-helm//launch-node node)))))
 
 
-  ;; Topics
+;; Topics
 
 
-  (defun ros-helm//list-of-running-topics ()
-    (ros-helm//list-of-command-output "rostopic list")))
+(defun ros-helm//list-of-running-topics ()
+  (ros-helm//list-of-command-output "rostopic list")))
 
+;;;###autoload
 (defun ros-helm/echo-topic (topic)
   "Echo TOPIC in a new buffer."
   (interactive)
-  (let ((buffer-name (format "*rostopic echo %s*" topic)))
+  (let ((buffer-name (format "*rostopic echo %s*" topic))
+        (process-command (format "rostopic echo %s" topic)))
     (with-current-buffer (get-buffer-create buffer-name)
-      (start-process-shell-command (format "rostopic echo %s" topic) buffer-name
-                                   (format "rostopic echo %s" topic)))
+      (start-process-shell-command process-command buffer-name
+                                   process-command))
+    (pop-to-buffer buffer-name)
+    (ros-process-mode)))
+
+;;;###autoload
+(defun ros-helm/hz-topic (topic)
+  "Run ros topic hz on TOPIC."
+  (interactive "sTopic: ")
+  (let ((buffer-name (format "*rostopic hz %s*" topic))
+        (process-command (format "rostopic hz %s" topic)))
+    (with-current-buffer (get-buffer-create buffer-name)
+      (start-process-shell-command process-command buffer-name process-command))
     (pop-to-buffer buffer-name)
     (ros-process-mode)))
 
 (defvar helm-source-ros-topics
   (helm-build-sync-source "Topics"
     :candidates 'ros-helm//list-of-running-topics
-    :action '(("Echo" . (lambda (topic) (ros-helm/echo-topic))))))
+    :action (helm-make-actions "Echo" 'ros-helm/echo-topic
+                               "Hz" 'ros-helm/hz-topic)))
+
+;;;###autoload
+(defun ros-helm/topics ()
+  (interactive)
+  (helm :sources '(helm-source-ros-topics)))
+
 
 
 ;;;###autoload
@@ -300,7 +320,8 @@ the car and the path to the package root as the cdr."
                    helm-source-ros-launchfiles
                    helm-source-ros-packages
                    helm-source-ros-nodes
-                   helm-source-ros-actions)
+                   helm-source-ros-actions
+                   helm-source-ros-topics)
         :buffer "*ros-helm*"))
 
 ;;;###autoload
