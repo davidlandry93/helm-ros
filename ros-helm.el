@@ -208,14 +208,14 @@ the car and the path to the package root as the cdr."
 
 (defvar ros-helm--nodes-candidate-list-cache nil)
 
-(defun ros-helm//fetch-list-of-packages ()
+(defun ros-helm//list-of-packages ()
   (ros-helm//list-of-command-output "rospack list"))
 
 (defun ros-helm//list-of-package-names ()
   (mapcar (lambda (x)
             (let ((parsed-entry (ros-helm//parsed-rospack-entry x)))
               (car parsed-entry)))
-          (ros-helm//fetch-list-of-packages)))
+          (ros-helm//list-of-packages)))
 
 (defun ros-helm//exec-folders-of-package (package)
   (ros-helm//list-of-command-output (format "catkin_find --libexec %s" package)))
@@ -250,26 +250,32 @@ the car and the path to the package root as the cdr."
                                       (ros-helm//real-string-of-package-node-pair pair)))
                  (ros-helm//list-of-package-node-pairs)))))
 
-(defun ros-helm/launch-node (node)
-  (interactive "")
+;;;###autoload
+(defun ros-helm/run-node (package node)
+  "Run ros NODE that is in PACKAGE."
+  (interactive
+   (let ((package (completing-read "Package: " (ros-helm//list-of-package-names))))
+     (list
+      package
+      (completing-read "Node: " (ros-helm//nodes-of-package package)))))
   (let ((node-buffer (get-buffer-create (format "*%s*" node))))
-    (start-process-shell-command "rosrun"
-                                 node-buffer
-                                 (format "rosrun %s" node))
+    (start-process "rosrun" node-buffer "rosrun" package node)
     (pop-to-buffer node-buffer)
     (ros-process-mode)))
 
 (defvar helm-source-ros-nodes
   (helm-build-sync-source "Nodes"
     :candidates 'ros-helm//node-candidate-list
-    :action '(("Run node" . (lambda (node) (ros-helm//launch-node node)))))
+    :action '(("Run node" . (lambda (chosen-candidate)
+                              (let ((list-of-args (split-string chosen-candidate)))
+                                (ros-helm/launch-node (car list-of-args) (car (cdr list-of-args)))))))))
 
 
 ;; Topics
 
 
 (defun ros-helm//list-of-running-topics ()
-  (ros-helm//list-of-command-output "rostopic list")))
+  (ros-helm//list-of-command-output "rostopic list"))
 
 ;;;###autoload
 (defun ros-helm/echo-topic (topic)
@@ -336,6 +342,7 @@ the car and the path to the package root as the cdr."
 (global-set-key (kbd "C-x C-r m") 'ros-helm/roscore)
 (global-set-key (kbd "C-x C-r t") 'ros-helm/topics)
 (global-set-key (kbd "C-x C-r l") 'ros-helm/launchfiles)
+(global-set-key (kbd "C-x C-r r") 'ros-helm/run-node)
 
 (add-to-list 'auto-mode-alist '("\\.launch\\'" . nxml-mode))
 
