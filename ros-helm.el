@@ -250,7 +250,8 @@ the car and the path to the package root as the cdr."
                                       (ros-helm//real-string-of-package-node-pair pair)))
                  (ros-helm//list-of-package-node-pairs)))))
 
-(defun ros-helm/launch-node (package node)
+;;;###autoload
+(defun ros-helm/run-node (package node)
   "Run ros NODE that is in PACKAGE."
   (interactive
    (let ((package (completing-read "Package: " (ros-helm//list-of-package-names))))
@@ -341,6 +342,7 @@ the car and the path to the package root as the cdr."
 (global-set-key (kbd "C-x C-r m") 'ros-helm/roscore)
 (global-set-key (kbd "C-x C-r t") 'ros-helm/topics)
 (global-set-key (kbd "C-x C-r l") 'ros-helm/launchfiles)
+(global-set-key (kbd "C-x C-r r") 'ros-helm/run-node)
 
 (add-to-list 'auto-mode-alist '("\\.launch\\'" . nxml-mode))
 
