@@ -45,7 +45,7 @@
     (define-key map (kbd "c") 'ros-helm/interrupt-ros-process)
     (define-key map (kbd "q") (lambda () (interactive) (delete-window)))
     map)
-  "Keymap for the ros-node major mode")
+  "Keymap for the ros process major mode")
 
 (defun ros-helm/interrupt-ros-process ()
   "Interrupts the ros process associated with the current buffer."
@@ -179,7 +179,7 @@
                   (format "find -L %s -type f -name \"*.action\"" ros-helm--package-path))))))
 
 (defvar helm-source-ros-actions
-  (helm-build-sync-source "Actions"
+  (helm-build-sync-source "Action Services"
     :candidates 'ros-helm//action-candidate-list
     :action '(("Open file" . ros-helm//open-file-action))))
 
@@ -267,7 +267,30 @@ the car and the path to the package root as the cdr."
 (defvar helm-source-ros-nodes
   (helm-build-sync-source "Nodes"
     :candidates 'ros-helm//node-candidate-list
-    :action '(("Run node" . (lambda (node) (ros-helm//launch-node node))))))
+    :action '(("Run node" . (lambda (node) (ros-helm//launch-node node)))))
+
+
+  ;; Topics
+
+
+  (defun ros-helm//list-of-running-topics ()
+    (ros-helm//list-of-command-output "rostopic list")))
+
+(defun ros-helm/echo-topic (topic)
+  "Echo TOPIC in a new buffer."
+  (interactive)
+  (let ((buffer-name (format "*rostopic echo %s*" topic)))
+    (with-current-buffer (get-buffer-create buffer-name)
+      (start-process-shell-command (format "rostopic echo %s" topic) buffer-name
+                                   (format "rostopic echo %s" topic)))
+    (pop-to-buffer buffer-name)
+    (ros-process-mode)))
+
+(defvar helm-source-ros-topics
+  (helm-build-sync-source "Topics"
+    :candidates 'ros-helm//list-of-running-topics
+    :action '(("Echo" . (lambda (topic) (ros-helm/echo-topic))))))
+
 
 ;;;###autoload
 (defun ros-helm ()
