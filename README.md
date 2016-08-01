@@ -1,14 +1,14 @@
 
-# ros-helm
+# helm-ros
 
-`ros-helm` is an Emacs package that interfaces ROS with the `helm` completion facilities.
+`helm-ros` is an Emacs package that interfaces ROS with the `helm` completion facilities.
 With it you can access launchfiles, nodes, service definitions, and many other things
-easily. Above all that `ros-helm` allows you to start ROS processes and gives you some
+easily. Above all that `helm-ros` allows you to start ROS processes and gives you some
 other goodies to facilitate your ROS development in C++.
 
 ## Screencap
 
-![Animated gif of ros-helm](/doc/screencap.gif)
+![Animated gif of helm-ros](/doc/screencap.gif)
 
 ## Installation
 
@@ -37,7 +37,7 @@ You have to repeat the same procedure for you catkin workspaces. You could add
 source /path/to/your/catkin/workspace/devel/setup.sh
 ```
 
-to you `.profile` file so that `ros-helm` can access your project files.
+to you `.profile` file so that `helm-ros` can access your project files.
 
 ### Getting the source
 
@@ -46,15 +46,18 @@ through MELPA.
 
 ### Configuration
 
-Add `require 'ros-helm` to your configuration.
+Add `require 'helm-ros` to your configuration.
+
+Somme keybindings are provided with the package. You can enable them
+by adding `(global-helm-ros-mode t)` in your config file.
 
 ## Keybindings
 
-By default, ros-helm binds the following keys.
+By default, helm-ros binds the following keys.
 
-- `C-x C-r h`. Starts ros-helm with all available sources.
+- `C-x C-r h`. Starts helm-ros with all available sources.
 - `C-x C-r m`. Start a `roscore`.
-- `C-x C-r I`. Invalidate ros-helm cache (if you create a new file).
+- `C-x C-r i`. Invalidate helm-ros cache (if you create a new file).
 
 ### ros-process-mode
 
@@ -66,17 +69,17 @@ In ros-process buffers, you can use the following keybindings.
 
 ## FAQ
 
-### What is the difference between ros-helm and rosemacs?
+### What is the difference between helm-ros and rosemacs?
 
 `rosemacs` is an older package for ROS programmers using Emacs. Usually it is packaged
 with ROS itself, although there is no package available for ROS Kinetic.
 
-`ros-helm` is pure Emacs LISP code, which means that it can be delivered through melpa.
+`helm-ros` is pure Emacs LISP code, which means that it can be delivered through melpa.
 `rosemacs` cannot be delivered that way because it contains common LISP code used to
 interface emacs with the LISP tools of ROS. 
 
-On the other hand `ros-helm` has a smaller set of features than `rosemacs`. You might
+On the other hand `helm-ros` has a smaller set of features than `rosemacs`. You might
 be better off using that package if you code ROS in LISP.
 
-Finally `ros-helm` is also available in a [spacemacs](http://spacemacs.org) layer, so if
+Finally `helm-ros` is also available in a [spacemacs](http://spacemacs.org) layer, so if
 you are a spacemacs user you might be better off with this package.

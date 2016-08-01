@@ -1,12 +1,12 @@
-;;; ros-helm.el ---  Interfaces ROS with helm  -*- lexical-binding: t; -*-
+;;; helm-ros.el ---  Interfaces ROS with helm  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016  David Landry
 
 ;; Author: David Landry <davidlandry93@gmail.com>
 ;; Keywords: helm, ROS
 ;; Version: 0.1.0
-;; Package-Requires: ((helm "1.9.9") (xterm-color "1.0"))
-;; URL: https://www.github.com/davidlandry93/ros-helm
+;; Package-Requires: ((helm "1.9.9") (xterm-color "1.0") (cl-lib "0.5"))
+;; URL: https://www.github.com/davidlandry93/helm-ros
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
 
 ;;; Commentary:
 
-;; ros-helm is a package that interfaces ROS with the helm completion facilities.
-;; For more information go to https://www.github.com/davidlandry93/ros-helm
+;; helm-ros is a package that interfaces ROS with the helm completion facilities.
+;; For more information go to https://www.github.com/davidlandry93/helm-ros
 
 ;;; Code:
 
@@ -41,25 +41,25 @@
 
 (defvar ros-process-mode-map
   (let ((map (make-keymap)))
-    (define-key map (kbd "k") 'ros-helm/kill-ros-process)
-    (define-key map (kbd "c") 'ros-helm/interrupt-ros-process)
+    (define-key map (kbd "k") 'helm-ros-kill-ros-process)
+    (define-key map (kbd "c") 'helm-ros-interrupt-ros-process)
     (define-key map (kbd "q") (lambda () (interactive) (delete-window)))
     map)
   "Keymap for the ros process major mode")
 
-(defun ros-helm/interrupt-ros-process ()
+(defun helm-ros-interrupt-ros-process ()
   "Interrupts the ros process associated with the current buffer."
   (interactive)
   (let ((ros-node-process (get-buffer-process (current-buffer))))
     (interrupt-process ros-node-process)))
 
-(defun ros-helm/kill-ros-process ()
+(defun helm-ros-kill-ros-process ()
   "Kills the ros process associated with the current buffer."
   (interactive)
   (let ((ros-node-process (get-buffer-process (current-buffer))))
     (kill-process ros-node-process)))
 
-(defun ros-helm//ros-process-filter (process string)
+(defun helm-ros--ros-process-filter (process string)
   "Apply `xterm-color-filter' to the text in STRING before outputting it to the PROCESS buffer."
   (when (buffer-live-p (process-buffer process))
     (with-current-buffer (process-buffer process)
@@ -73,22 +73,22 @@
 ;;;###autoload
 (define-derived-mode ros-process-mode fundamental-mode "ROS Process Mode"
   "Major mode for handling a rosrun console."
-  (set-process-filter (get-buffer-process (current-buffer)) 'ros-helm//ros-process-filter))
+  (set-process-filter (get-buffer-process (current-buffer)) 'helm-ros--ros-process-filter))
 
 
-;; ros-helm
+;; helm-ros
 
 
-(defvar ros-helm--package-path
+(defvar helm-ros--package-path
   (mapconcat 'identity (cl-remove-if-not 'file-exists-p
                                       (split-string
                                        (getenv "ROS_PACKAGE_PATH") ":")) " "))
 
 
-(defun ros-helm//open-file-action (filename)
+(defun helm-ros--open-file-action (filename)
   (interactive) (find-file filename))
 
-(defun ros-helm//launch-launchfile (filename)
+(defun helm-ros--launch-launchfile (filename)
   (let* ((launchfile-name (file-name-nondirectory
                            (file-name-sans-extension filename)))
          (buffer (get-buffer-create (format "*roslaunch %s*" launchfile-name))))
@@ -97,16 +97,16 @@
       (ros-process-mode)
       (pop-to-buffer buffer))))
 
-(defun ros-helm//displayed-real-pair-of-path (fullpath)
+(defun helm-ros--displayed-real-pair-of-path (fullpath)
   (cons (file-name-nondirectory (file-name-sans-extension fullpath)) fullpath))
 
-(defun ros-helm//list-of-command-output (command)
+(defun helm-ros--list-of-command-output (command)
   (with-temp-buffer
     (call-process-shell-command command nil t)
     (split-string (buffer-string) "\n" t)))
 
 ;;;###autoload
-(defun ros-helm/roscore ()
+(defun helm-ros-roscore ()
   "Start a roscore in the *roscore* buffer.  Create it if it doesn't exist."
   (interactive)
   (with-current-buffer (get-buffer-create "*roscore*")
@@ -118,23 +118,23 @@
 ;; Launchfiles
 
 
-(defvar ros-helm--launchfile-candidate-list-cache nil)
+(defvar helm-ros--launchfile-candidate-list-cache nil)
 (defvar ros-helm--launchfile-actions '(("Edit" . ros-helm//open-file-action)
-                                       ("Launch" . ros-helm//launch-launchfile)))
+                                       ("Launch" . helm-ros--launch-launchfile)))
 
-(defun ros-helm//launchfile-candidate-list ()
-  (if ros-helm--launchfile-candidate-list-cache
-      ros-helm--launchfile-candidate-list-cache
-    (set 'ros-helm--launchfile-candidate-list-cache
-         (mapcar 'ros-helm//displayed-real-pair-of-path
-                 (ros-helm//list-of-command-output
-                  (format "find -L %s -type f -name \"*.launch\"" ros-helm--package-path))))))
+(defun helm-ros--launchfile-candidate-list ()
+  (if helm-ros--launchfile-candidate-list-cache
+      helm-ros--launchfile-candidate-list-cache
+    (set 'helm-ros--launchfile-candidate-list-cache
+         (mapcar 'helm-ros--displayed-real-pair-of-path
+                 (helm-ros--list-of-command-output
+                  (format "find -L %s -type f -name \"*.launch\"" helm-ros--package-path))))))
 
 
 (defvar helm-source-ros-launchfiles
   (helm-build-sync-source "Launchfiles"
-    :candidates 'ros-helm//launchfile-candidate-list
-    :action ros-helm--launchfile-actions))
+    :candidates 'helm-ros--launchfile-candidate-list
+    :action helm-ros--launchfile-actions))
 
 ;;;###autoload
 (defun ros-helm/launchfiles ()
@@ -145,110 +145,110 @@
 ;; Services
 
 
-(defvar ros-helm--service-candidate-list-cache nil)
+(defvar helm-ros--service-candidate-list-cache nil)
 
-(defun ros-helm//service-candidate-list ()
-  (if ros-helm--service-candidate-list-cache
-      ros-helm--service-candidate-list-cache
-    (set 'ros-helm--service-candidate-list-cache
-         (mapcar 'ros-helm//displayed-real-pair-of-path
-                 (ros-helm//list-of-command-output
-                  (format "find -L %s -type f -name \"*.srv\"" ros-helm--package-path))))))
+(defun helm-ros--service-candidate-list ()
+  (if helm-ros--service-candidate-list-cache
+      helm-ros--service-candidate-list-cache
+    (set 'helm-ros--service-candidate-list-cache
+         (mapcar 'helm-ros--displayed-real-pair-of-path
+                 (helm-ros--list-of-command-output
+                  (format "find -L %s -type f -name \"*.srv\"" helm-ros--package-path))))))
 
 (defvar helm-source-ros-services
   (helm-build-sync-source "Services"
-    :candidates 'ros-helm//service-candidate-list
-    :action '(("Open file" . ros-helm//open-file-action))))
+    :candidates 'helm-ros--service-candidate-list
+    :action '(("Open file" . helm-ros--open-file-action))))
 
 
 ;; Actions
 
-(defvar ros-helm--action-candidate-list-cache nil)
+(defvar helm-ros--action-candidate-list-cache nil)
 
-(defun ros-helm//action-candidate-list ()
-  (if ros-helm--action-candidate-list-cache
-      ros-helm--action-candidate-list-cache
-    (set 'ros-helm--action-candidate-list-cache
-         (mapcar 'ros-helm//displayed-real-pair-of-path
-                 (ros-helm//list-of-command-output
-                  (format "find -L %s -type f -name \"*.action\"" ros-helm--package-path))))))
+(defun helm-ros--action-candidate-list ()
+  (if helm-ros--action-candidate-list-cache
+      helm-ros--action-candidate-list-cache
+    (set 'helm-ros--action-candidate-list-cache
+         (mapcar 'helm-ros--displayed-real-pair-of-path
+                 (helm-ros--list-of-command-output
+                  (format "find -L %s -type f -name \"*.action\"" helm-ros--package-path))))))
 
 (defvar helm-source-ros-actions
   (helm-build-sync-source "Action Services"
-    :candidates 'ros-helm//action-candidate-list
-    :action '(("Open file" . ros-helm//open-file-action))))
+    :candidates 'helm-ros--action-candidate-list
+    :action '(("Open file" . helm-ros--open-file-action))))
 
 
 ;; Packages
 
 
-(defvar ros-helm--package-candidate-list-cache nil)
+(defvar helm-ros--package-candidate-list-cache nil)
 
-(defun ros-helm//parsed-rospack-entry (entry)
+(defun helm-ros--parsed-rospack-entry (entry)
   (let ((splitted-string (split-string entry)) )
     (cons (car splitted-string) (car (cdr splitted-string)))))
 
-(defun ros-helm//package-candidate-list ()
+(defun helm-ros--package-candidate-list ()
   "Outputs a list of dotted pairs having the name of the package as
 the car and the path to the package root as the cdr."
-  (if ros-helm--package-candidate-list-cache
-      ros-helm--package-candidate-list-cache
-    (set 'ros-helm--package-candidate-list-cache
-         (mapcar 'ros-helm//parsed-rospack-entry
-                 (ros-helm//list-of-command-output "rospack list")))))
+  (if helm-ros--package-candidate-list-cache
+      helm-ros--package-candidate-list-cache
+    (set 'helm-ros--package-candidate-list-cache
+         (mapcar 'helm-ros--parsed-rospack-entry
+                 (helm-ros--list-of-command-output "rospack list")))))
 
 (defvar helm-source-ros-packages
   (helm-build-sync-source "Packages"
-    :candidates 'ros-helm//package-candidate-list
+    :candidates 'helm-ros--package-candidate-list
     :action '(("Open folder" . (lambda (candidate) (interactive) (dired candidate))))))
 
 
 ;; Nodes
 
 
-(defvar ros-helm--nodes-candidate-list-cache nil)
+(defvar helm-ros--nodes-candidate-list-cache nil)
 
-(defun ros-helm//list-of-packages ()
-  (ros-helm//list-of-command-output "rospack list"))
+(defun helm-ros--list-of-packages ()
+  (helm-ros--list-of-command-output "rospack list"))
 
-(defun ros-helm//list-of-package-names ()
+(defun helm-ros--list-of-package-names ()
   (mapcar (lambda (x)
-            (let ((parsed-entry (ros-helm//parsed-rospack-entry x)))
+            (let ((parsed-entry (helm-ros--parsed-rospack-entry x)))
               (car parsed-entry)))
-          (ros-helm//list-of-packages)))
+          (helm-ros--list-of-packages)))
 
-(defun ros-helm//exec-folders-of-package (package)
-  (ros-helm//list-of-command-output (format "catkin_find --libexec %s" package)))
+(defun helm-ros--exec-folders-of-package (package)
+  (helm-ros--list-of-command-output (format "catkin_find --libexec %s" package)))
 
-(defun ros-helm//nodes-of-package (package)
-  (let ((list-of-exec-folders (ros-helm//exec-folders-of-package package)))
+(defun helm-ros--nodes-of-package (package)
+  (let ((list-of-exec-folders (helm-ros--exec-folders-of-package package)))
     (if list-of-exec-folders
         (mapcar 'file-name-nondirectory
-                (ros-helm//list-of-command-output
+                (helm-ros--list-of-command-output
                  (format "find -L %s -type f -executable"
                          (mapconcat 'identity list-of-exec-folders " ")))))))
 
-(defun ros-helm//list-of-package-node-pairs ()
+(defun helm-ros--list-of-package-node-pairs ()
   (let (list-of-pairs)
     (message "Building list of nodes (this may take a while)")
-    (dolist (package (ros-helm//list-of-package-names))
-      (dolist (node (ros-helm//nodes-of-package package))
+    (dolist (package (helm-ros--list-of-package-names))
+      (dolist (node (helm-ros--nodes-of-package package))
         (push (cons package node) list-of-pairs)))
     list-of-pairs))
 
-(defun ros-helm//pretty-string-of-package-node-pair (pair)
+(defun helm-ros--pretty-string-of-package-node-pair (pair)
   (format "%s/%s" (car pair) (cdr pair)))
 
-(defun ros-helm//real-string-of-package-node-pair (pair)
+(defun helm-ros--real-string-of-package-node-pair (pair)
   (format "%s %s" (car pair) (cdr pair)))
 
-(defun ros-helm//node-candidate-list ()
-  (if ros-helm--nodes-candidate-list-cache
-      ros-helm--nodes-candidate-list-cache
-    (set 'ros-helm--nodes-candidate-list-cache
-         (mapcar (lambda (pair) (cons (ros-helm//pretty-string-of-package-node-pair pair)
-                                      (ros-helm//real-string-of-package-node-pair pair)))
-                 (ros-helm//list-of-package-node-pairs)))))
+(defun helm-ros--node-candidate-list ()
+  (if helm-ros--nodes-candidate-list-cache
+      helm-ros--nodes-candidate-list-cache
+    (set 'helm-ros--nodes-candidate-list-cache
+         (mapcar (lambda (pair) (cons (helm-ros--pretty-string-of-package-node-pair pair)
+                                      (helm-ros--real-string-of-package-node-pair pair)))
+                 (helm-ros--list-of-package-node-pairs)))))
 
 ;;;###autoload
 (defun ros-helm/run-node (package node)
@@ -265,7 +265,7 @@ the car and the path to the package root as the cdr."
 
 (defvar helm-source-ros-nodes
   (helm-build-sync-source "Nodes"
-    :candidates 'ros-helm//node-candidate-list
+    :candidates 'helm-ros--node-candidate-list
     :action '(("Run node" . (lambda (chosen-candidate)
                               (let ((list-of-args (split-string chosen-candidate)))
                                 (ros-helm/launch-node (car list-of-args) (car (cdr list-of-args)))))))))
@@ -315,7 +315,7 @@ the car and the path to the package root as the cdr."
 
 
 ;;;###autoload
-(defun ros-helm ()
+(defun helm-ros ()
   "Launch ros-helm with all available sources."
   (interactive)
   (helm :sources '(helm-source-ros-services
@@ -324,28 +324,33 @@ the car and the path to the package root as the cdr."
                    helm-source-ros-nodes
                    helm-source-ros-actions
                    helm-source-ros-topics)
-        :buffer "*ros-helm*"))
 
 ;;;###autoload
-(defun ros-helm/invalidate-cache ()
-  "Invalidates the cache of all ros-helm sources."
+(defun helm-ros-invalidate-cache ()
+  "Invalidates the cache of all helm-ros sources."
   (interactive)
-  (setq ros-helm--package-candidate-list-cache nil
-        ros-helm--launchfile-candidate-list-cache nil
-        ros-helm--nodes-candidate-list-cache nil
-        ros-helm--service-candidate-list-cache nil
-        ros-helm--action-candidate-list-cache nil))
+  (setq helm-ros--package-candidate-list-cache nil
+        helm-ros--launchfile-candidate-list-cache nil
+        helm-ros--nodes-candidate-list-cache nil
+        helm-ros--service-candidate-list-cache nil
+        helm-ros--action-candidate-list-cache nil))
 
-(global-unset-key (kbd "C-x C-r"))
-(global-set-key (kbd "C-x C-r i") 'ros-helm/invalidate-cache)
-(global-set-key (kbd "C-x C-r h") 'ros-helm)
-(global-set-key (kbd "C-x C-r m") 'ros-helm/roscore)
+(defvar helm-ros-mode-keymap (make-sparse-keymap))
 (global-set-key (kbd "C-x C-r t") 'ros-helm/topics)
 (global-set-key (kbd "C-x C-r l") 'ros-helm/launchfiles)
 (global-set-key (kbd "C-x C-r r") 'ros-helm/run-node)
 
-(add-to-list 'auto-mode-alist '("\\.launch\\'" . nxml-mode))
+;;;###autoload
+(define-minor-mode global-helm-ros-mode
+  :init nil
+  :lighter " ROS"
+  :keymap (let ((keymap (make-sparse-keymap)))
+            (define-key keymap (kbd "C-x C-r i") 'helm-ros-invalidate-cache)
+            (define-key keymap (kbd "C-x C-r h") 'helm-ros)
+            (define-key keymap (kbd "C-x C-r m") 'helm-ros-roscore)
+            keymap)
+  :global t)
 
-(provide 'ros-helm)
+(provide 'helm-ros)
 
-;;; ros-helm.el ends here
+;;; helm-ros.el ends here
