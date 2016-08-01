@@ -179,7 +179,7 @@
                   (format "find -L %s -type f -name \"*.action\"" helm-ros--package-path))))))
 
 (defvar helm-source-ros-actions
-  (helm-build-sync-source "Actions"
+  (helm-build-sync-source "Action Services"
     :candidates 'helm-ros--action-candidate-list
     :action '(("Open file" . helm-ros--open-file-action))))
 
