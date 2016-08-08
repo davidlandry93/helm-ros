@@ -1,6 +1,8 @@
 
 # helm-ros
 
+[![MELPA](http://melpa.org/packages/helm-ros-badge.svg)](http://melpa.org/#/helm-ros)
+
 `helm-ros` is an Emacs package that interfaces ROS with the `helm` completion facilities.
 With it you can access launchfiles, nodes, service definitions, and many other things
 easily. Above all that `helm-ros` allows you to start ROS processes and gives you some
