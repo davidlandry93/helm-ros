@@ -108,6 +108,13 @@
     (call-process-shell-command command nil t)
     (split-string (buffer-string) "\n" t)))
 
+(defun helm-ros--start-ros-process (command)
+  (let ((buffer-name (format "*%s*" command)))
+    (with-current-buffer (get-buffer-create buffer-name)
+      (start-process-shell-command command buffer-name command))
+    (pop-to-buffer buffer-name)
+    (ros-process-mode)))
+
 ;;;###autoload
 (defun helm-ros-set-master-uri (uri)
   "Set the ROS_MASTER_URI environment variable to URI"
@@ -282,30 +289,26 @@ the car and the path to the package root as the cdr."
 (defun helm-ros-echo-topic (topic)
   "Echo TOPIC in a new buffer."
   (interactive "sTopic: ")
-  (let ((buffer-name (format "*rostopic echo %s*" topic))
-        (process-command (format "rostopic echo %s" topic)))
-    (with-current-buffer (get-buffer-create buffer-name)
-      (start-process-shell-command process-command buffer-name
-                                   process-command))
-    (pop-to-buffer buffer-name)
-    (ros-process-mode)))
+  (helm-ros--start-ros-process (format "rostopic echo %s" topic)))
 
 ;;;###autoload
 (defun helm-ros-hz-topic (topic)
   "Run ros topic hz on TOPIC."
   (interactive "sTopic: ")
-  (let ((buffer-name (format "*rostopic hz %s*" topic))
-        (process-command (format "rostopic hz %s" topic)))
-    (with-current-buffer (get-buffer-create buffer-name)
-      (start-process-shell-command process-command buffer-name process-command))
-    (pop-to-buffer buffer-name)
-    (ros-process-mode)))
+  (helm-ros--start-ros-process (format "rostopic hz %s" topic)))
+
+;;;###autoload
+(defun helm-ros-topic-info (topic)
+  "Run rostopic info on TOPIC."
+  (interactive "sTopic: ")
+  (helm-ros--start-ros-process (format "rostopic info %s" topic)))
 
 (defvar helm-source-ros-topics
   (helm-build-sync-source "Topics"
     :candidates 'helm-ros--list-of-running-topics
     :action (helm-make-actions "Echo" 'helm-ros-echo-topic
-                               "Hz" 'helm-ros-hz-topic)))
+                               "Hz" 'helm-ros-hz-topic
+                               "Info" 'helm-ros-topic-info)))
 
 ;;;###autoload
 (defun helm-ros-topics ()
