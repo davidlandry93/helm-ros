@@ -109,6 +109,12 @@
     (split-string (buffer-string) "\n" t)))
 
 ;;;###autoload
+(defun helm-ros-set-master-uri (uri)
+  "Set the ROS_MASTER_URI environment variable to URI"
+  (interactive "sNew ROS Master URI: ")
+  (setenv "ROS_MASTER_URI" uri))
+
+;;;###autoload
 (defun helm-ros-roscore ()
   "Start a roscore in the *roscore* buffer.  Create it if it doesn't exist."
   (interactive)
