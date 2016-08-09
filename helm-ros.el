@@ -73,7 +73,10 @@
 ;;;###autoload
 (define-derived-mode ros-process-mode fundamental-mode "ROS Process Mode"
   "Major mode for handling a rosrun console."
-  (set-process-filter (get-buffer-process (current-buffer)) 'helm-ros--ros-process-filter))
+  (let ((ros-process (get-buffer-process (current-buffer))))
+    (if ros-process
+        (set-process-filter (get-buffer-process (current-buffer)) 'helm-ros--ros-process-filter)
+      (message "No process associated with current buffer."))))
 
 
 ;; helm-ros
