@@ -122,8 +122,6 @@
 
 
 (defvar helm-ros--launchfile-candidate-list-cache nil)
-(defvar ros-helm--launchfile-actions '(("Edit" . ros-helm//open-file-action)
-                                       ("Launch" . helm-ros--launch-launchfile)))
 
 (defun helm-ros--launchfile-candidate-list ()
   (if helm-ros--launchfile-candidate-list-cache
@@ -137,10 +135,11 @@
 (defvar helm-source-ros-launchfiles
   (helm-build-sync-source "Launchfiles"
     :candidates 'helm-ros--launchfile-candidate-list
-    :action helm-ros--launchfile-actions))
+    :action '(("Edit" . ros-helm//open-file-action)
+             ("Launch" . helm-ros--launch-launchfile))))
 
 ;;;###autoload
-(defun ros-helm/launchfiles ()
+(defun helm-ros-launchfiles ()
   "Launch helm with ros launchfiles as the only source."
   (interactive)
   (helm :sources '(helm-source-ros-launchfiles)))
@@ -254,36 +253,29 @@ the car and the path to the package root as the cdr."
                  (helm-ros--list-of-package-node-pairs)))))
 
 ;;;###autoload
-(defun ros-helm/run-node (package node)
+(defun helm-ros-run-node (package node)
   "Run ros NODE that is in PACKAGE."
   (interactive
-   (let ((package (completing-read "Package: " (ros-helm//list-of-package-names))))
+   (let ((package (completing-read "Package: " (helm-ros--list-of-package-names))))
      (list
       package
-      (completing-read "Node: " (ros-helm//nodes-of-package package)))))
+      (completing-read "Node: " (helm-ros--nodes-of-package package)))))
   (let ((node-buffer (get-buffer-create (format "*%s*" node))))
     (start-process "rosrun" node-buffer "rosrun" package node)
     (pop-to-buffer node-buffer)
     (ros-process-mode)))
 
-(defvar helm-source-ros-nodes
-  (helm-build-sync-source "Nodes"
-    :candidates 'helm-ros--node-candidate-list
-    :action '(("Run node" . (lambda (chosen-candidate)
-                              (let ((list-of-args (split-string chosen-candidate)))
-                                (ros-helm/launch-node (car list-of-args) (car (cdr list-of-args)))))))))
-
 
 ;; Topics
 
 
-(defun ros-helm//list-of-running-topics ()
-  (ros-helm//list-of-command-output "rostopic list"))
+(defun helm-ros--list-of-running-topics ()
+  (helm-ros--list-of-command-output "rostopic list"))
 
 ;;;###autoload
-(defun ros-helm/echo-topic (topic)
+(defun helm-ros-echo-topic (topic)
   "Echo TOPIC in a new buffer."
-  (interactive)
+  (interactive "sTopic: ")
   (let ((buffer-name (format "*rostopic echo %s*" topic))
         (process-command (format "rostopic echo %s" topic)))
     (with-current-buffer (get-buffer-create buffer-name)
@@ -293,7 +285,7 @@ the car and the path to the package root as the cdr."
     (ros-process-mode)))
 
 ;;;###autoload
-(defun ros-helm/hz-topic (topic)
+(defun helm-ros-hz-topic (topic)
   "Run ros topic hz on TOPIC."
   (interactive "sTopic: ")
   (let ((buffer-name (format "*rostopic hz %s*" topic))
@@ -305,16 +297,14 @@ the car and the path to the package root as the cdr."
 
 (defvar helm-source-ros-topics
   (helm-build-sync-source "Topics"
-    :candidates 'ros-helm//list-of-running-topics
-    :action (helm-make-actions "Echo" 'ros-helm/echo-topic
-                               "Hz" 'ros-helm/hz-topic)))
+    :candidates 'helm-ros--list-of-running-topics
+    :action (helm-make-actions "Echo" 'helm-ros-echo-topic
+                               "Hz" 'helm-ros-hz-topic)))
 
 ;;;###autoload
-(defun ros-helm/topics ()
-  "Launches ros-helm with only the topic source."
+(defun helm-ros-topics ()
   (interactive)
   (helm :sources '(helm-source-ros-topics)))
-
 
 
 ;;;###autoload
@@ -326,7 +316,7 @@ the car and the path to the package root as the cdr."
                    helm-source-ros-packages
                    helm-source-ros-nodes
                    helm-source-ros-actions
-                   helm-source-ros-topics)
+                   helm-source-ros-topics)))
 
 ;;;###autoload
 (defun helm-ros-invalidate-cache ()
@@ -337,11 +327,6 @@ the car and the path to the package root as the cdr."
         helm-ros--nodes-candidate-list-cache nil
         helm-ros--service-candidate-list-cache nil
         helm-ros--action-candidate-list-cache nil))
-
-(defvar helm-ros-mode-keymap (make-sparse-keymap))
-(global-set-key (kbd "C-x C-r t") 'ros-helm/topics)
-(global-set-key (kbd "C-x C-r l") 'ros-helm/launchfiles)
-(global-set-key (kbd "C-x C-r r") 'ros-helm/run-node)
 
 ;;;###autoload
 (define-minor-mode global-helm-ros-mode
