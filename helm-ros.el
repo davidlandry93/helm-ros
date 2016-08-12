@@ -72,11 +72,10 @@
 
 ;;;###autoload
 (define-derived-mode ros-process-mode fundamental-mode "ROS Process Mode"
-  "Major mode for handling a rosrun console."
+  "Major mode for handling the output of ROS processes."
   (let ((ros-process (get-buffer-process (current-buffer))))
     (if ros-process
-        (set-process-filter (get-buffer-process (current-buffer)) 'helm-ros--ros-process-filter)
-      (message "No process associated with current buffer."))))
+        (set-process-filter (get-buffer-process (current-buffer)) 'helm-ros--ros-process-filter))))
 
 
 ;; helm-ros
@@ -115,6 +114,14 @@
     (pop-to-buffer buffer-name)
     (ros-process-mode)))
 
+(defun helm-ros--ros-shell-command (command)
+  (let ((buffer-name "*ROS Command Output*"))
+    (with-current-buffer (get-buffer-create buffer-name)
+      (erase-buffer)
+      (start-process-shell-command "ROS Command" buffer-name command)
+      (pop-to-buffer buffer-name)
+      (ros-process-mode))))
+
 ;;;###autoload
 (defun helm-ros-set-master-uri (uri)
   "Set the ROS_MASTER_URI environment variable to URI"
@@ -148,7 +155,7 @@
 (defvar helm-source-ros-launchfiles
   (helm-build-sync-source "Launchfiles"
     :candidates 'helm-ros--launchfile-candidate-list
-    :action '(("Edit" . ros-helm//open-file-action)
+    :action '(("Edit" . helm-ros--open-file-action)
              ("Launch" . helm-ros--launch-launchfile))))
 
 ;;;###autoload
@@ -223,6 +230,9 @@ the car and the path to the package root as the cdr."
 
 (defvar helm-ros--nodes-candidate-list-cache nil)
 
+(defun helm-ros--input-node ()
+  (completing-read "Node: " (helm-ros--list-of-running-nodes)))
+
 (defun helm-ros--list-of-packages ()
   (helm-ros--list-of-command-output "rospack list"))
 
@@ -278,6 +288,35 @@ the car and the path to the package root as the cdr."
     (pop-to-buffer node-buffer)
     (ros-process-mode)))
 
+(defun helm-ros--list-of-running-nodes ()
+  "List of the nodes currently running."
+  (helm-ros--list-of-command-output "rosnode list"))
+
+;;;###autoload
+(defun helm-ros-rosnode-info (node)
+  "Print the informations of NODE."
+  (interactive (list (helm-ros--input-node)))
+  (helm-ros--ros-shell-command (format "rosnode info %s" node)))
+
+;;;###autoload
+(defun helm-ros-kill-node (node)
+  "Kill the process of NODE."
+  (interactive
+   (list (helm-ros--input-node)))
+  (shell-command (format "rosnode kill %s" node)))
+
+;;;###autoload
+(defun helm-ros-rosnode-list ()
+  "Print a list of running nodes in a new buffer."
+  (interactive)
+  (helm-ros--ros-shell-command "rosnode list"))
+
+(defvar helm-source-ros-nodes
+  (helm-build-sync-source "Nodes"
+    :candidates 'helm-ros--list-of-running-nodes
+    :action (helm-make-actions "Info" 'helm-ros-rosnode-info
+                               "Kill" 'helm-ros-kill-node)))
+
 
 ;; Topics
 
@@ -286,29 +325,38 @@ the car and the path to the package root as the cdr."
   (helm-ros--list-of-command-output "rostopic list"))
 
 ;;;###autoload
-(defun helm-ros-echo-topic (topic)
+(defun helm-ros-rostopic-list ()
+  (interactive)
+  (helm-ros--ros-shell-command "rostopic list"))
+
+(defun helm-ros--input-topic ()
+  (completing-read "Topic: " (helm-ros--list-of-running-topics)))
+
+;;;###autoload
+(defun helm-ros-rostopic-echo (topic)
   "Echo TOPIC in a new buffer."
-  (interactive "sTopic: ")
+  (interactive
+   (list (helm-ros--input-topic)))
   (helm-ros--start-ros-process (format "rostopic echo %s" topic)))
 
 ;;;###autoload
-(defun helm-ros-hz-topic (topic)
+(defun helm-ros-rostopic-hz (topic)
   "Run ros topic hz on TOPIC."
-  (interactive "sTopic: ")
+  (interactive (list (helm-ros--input-topic)))
   (helm-ros--start-ros-process (format "rostopic hz %s" topic)))
 
 ;;;###autoload
-(defun helm-ros-topic-info (topic)
+(defun helm-ros-rostopic-info (topic)
   "Run rostopic info on TOPIC."
-  (interactive "sTopic: ")
+  (interactive (list (helm-ros--input-topic)))
   (helm-ros--start-ros-process (format "rostopic info %s" topic)))
 
 (defvar helm-source-ros-topics
   (helm-build-sync-source "Topics"
     :candidates 'helm-ros--list-of-running-topics
-    :action (helm-make-actions "Echo" 'helm-ros-echo-topic
-                               "Hz" 'helm-ros-hz-topic
-                               "Info" 'helm-ros-topic-info)))
+    :action (helm-make-actions "Echo" 'helm-ros-rostopic-echo
+                               "Hz" 'helm-ros-rostopic-hz
+                               "Info" 'helm-ros-rostopic-info)))
 
 ;;;###autoload
 (defun helm-ros-topics ()
@@ -323,9 +371,9 @@ the car and the path to the package root as the cdr."
   (helm :sources '(helm-source-ros-services
                    helm-source-ros-launchfiles
                    helm-source-ros-packages
-                   helm-source-ros-nodes
                    helm-source-ros-actions
-                   helm-source-ros-topics)))
+                   helm-source-ros-topics
+                   helm-source-ros-nodes)))
 
 ;;;###autoload
 (defun helm-ros-invalidate-cache ()
@@ -339,7 +387,8 @@ the car and the path to the package root as the cdr."
 
 ;;;###autoload
 (define-minor-mode global-helm-ros-mode
-  :init nil
+  "A minor mode that enables the keybindings for helm-ros."
+  :init-value t
   :lighter " ROS"
   :keymap (let ((keymap (make-sparse-keymap)))
             (define-key keymap (kbd "C-x C-r i") 'helm-ros-invalidate-cache)
